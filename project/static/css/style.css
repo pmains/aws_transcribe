@@ -1,0 +1,65 @@
+@font-face {
+  font-family: 'Montserrat-Regular';
+  src: url('/static/fonts/MontserratRegular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Montserrat-Extralight';
+  src: url('/static/fonts/MontserratExtralight.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Montserrat-Semibold';
+  src: url('/static/fonts/MontserratSemibold.ttf') format('truetype');
+}
+
+body {
+  font-family: 'Montserrat-Extralight',"Segoe UI",Roboto,sans-serif;
+  font-size: 16px;
+  font-weight: 100;
+  line-height: 1.5;
+  color: #333;
+  background-color: #fff;
+}
+
+h1,h2,h3 {
+  font-family: 'Montserrat-Semibold',"Segoe UI",Roboto,sans-serif;
+  font-weight: bold;
+  color: #182553;
+}
+
+.navbar-brand {
+  font-family: 'Montserrat-Regular',"Segoe UI",Roboto,sans-serif;
+  font-weight: normal;
+}
+
+input[type=file] {
+  padding: 10px;
+  height: 50px;
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #c8d0f1;
+  border-color: #999;
+}
+
+.btn-primary {
+  background-color: #182553;
+  border-color: #182553;
+}
+
+.btn-danger {
+  background-color: #870b0b;
+  border-color: #870b0b;
+}
+
+.bg-light {
+  background-color: #182553!important;
+}
+
+.navbar-light .navbar-brand {
+  color: #fff;
+}
+
+.navbar-light .navbar-brand:hover {
+  color: #c8d0f1;
+}

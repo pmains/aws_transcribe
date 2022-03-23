@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 class="py-5 text-center">Login</h1>
+    <div class="text-center">
+        <form method="POST" action="/signup">
+            <input class="form-control offset-md-4 col-md-4 mb-2" type="email" name="email" placeholder="Email" autofocus="">
+            <input class="form-control offset-md-4 col-md-4 mb-2" type="text" name="name" placeholder="Name" autofocus="">
+            <input class="form-control offset-md-4 col-md-4 mb-2" type="password" name="password" placeholder="Password">
+
+            <div class="row"><button class="btn btn-primary offset-md-7 col-md-1 mt-4">Sign Up</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="py-5 text-center">Transcription Jobs</h1>
+    <div class="text-center">
+        {% for job in jobs %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ job['TranscriptionJobName'] }}</h5>
+                    <p class="card-text">
+                        {% if job['TranscriptionJobStatus'] == "COMPLETED" %}
+                            <a href="{{ url_for('main.download_transcript', job_name=job['TranscriptionJobName']) }}"
+                               class="btn btn-primary">Download</a>
+                            <a href="{{ url_for('main.delete_job', job_name=job['TranscriptionJobName']) }}"
+                               class="btn btn-danger">Delete</a>
+                        {% elif job['TranscriptionJobStatus'] == 'FAILED' %}
+                            <span class="danger">{{ job['TranscriptionJobStatus'] }}</span>
+                            <a href="{{ url_for('main.delete_job', job_name=job['TranscriptionJobName']) }}"
+                               class="btn btn-danger">Delete</a>
+                        {% else %}
+                            {{ job['TranscriptionJobStatus'] }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        {% else %}
+            <p>No jobs found.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

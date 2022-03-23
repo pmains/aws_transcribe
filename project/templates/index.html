@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="py-5 text-center">Upload File</h1>
+    <div class="text-center">
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+            <input type="file" name="file" class="form-control" /><br/>
+            <input type="submit" value="Upload" class="btn btn-primary col-2" />
+        </form>
+    </div>
+{% endblock %}

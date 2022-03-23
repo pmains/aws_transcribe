@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h1 class="py-5 text-center">Audio Files</h1>
+    <div class="text-center">
+        {% for file in files %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ file }}</h5>
+                    <p class="card-text">
+                        <a href="{{ url_for('main.transcribe', filename=file) }}" class="btn btn-primary">Transcribe</a>
+                        <a href="{{ url_for('main.delete_audio', filename=file) }}" class="btn btn-danger">Delete</a>
+                    </p>
+                </div>
+            </div>
+        {% else %}
+            <p>No audio files found.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

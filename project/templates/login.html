@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 class="py-5 text-center">Login</h1>
+    <div class="text-center">
+        <form method="POST" action="/login">
+            <input class="form-control offset-md-4 col-md-4 mb-2" type="email" name="email" placeholder="Your Email" autofocus="">
+            <input class="form-control offset-md-4 col-md-4 mb-2" type="password" name="password" placeholder="Your Password">
+
+            <div><label class="checkbox">
+                <input type="checkbox" name="remember">
+                Remember me
+            </label></div>
+
+            <button class="btn btn-primary">Login</button>
+        </form>
+    </div>
+{% endblock %}
