@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 class="py-5 text-center">Password Token</h1>
+    <div class="text-center">
+        <form method="POST" action="/signup">
+            <input class="form-control text-center offset-md-4 col-md-4 mb-2" type="text" name="token" value="{{token}}" disabled>
+        </form>
+    </div>
+</div>
+{% endblock %}
