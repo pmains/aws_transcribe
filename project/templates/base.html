@@ -27,7 +27,7 @@
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <a class="navbar-brand" href="{{ url_for('main.index') }}">Upload</a>
             <a class="navbar-brand" href="{{ url_for('main.audio') }}">Audio</a>
-            <a class="navbar-brand" href="{{ url_for('main.job_status') }}">Jobs</a>
+            <a class="navbar-brand" href="{{ url_for('main.transcripts') }}">Transcripts</a>
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('auth.logout') }}" class="navbar-brand pull-right">Logout</a>
             {% endif %}

@@ -34,3 +34,4 @@ SQLAlchemy==1.4.32
 urllib3==1.26.8
 wcwidth==0.2.5
 Werkzeug==2.0.3
+openai==0.27.6

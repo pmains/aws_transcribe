@@ -2,8 +2,9 @@ import json
 import re
 
 import boto3
+import openai
 
-from flask import Blueprint, Response, redirect, request, render_template
+from flask import Blueprint, Response, redirect, request, render_template, jsonify
 from flask_login import login_required
 from dotenv import load_dotenv
 import os
@@ -29,6 +30,8 @@ def index():
 @main.route('/upload', methods=['POST'])
 @login_required
 def upload():
+    """Upload an MP3 file to S3 bucket"""
+
     file_path = os.path.join('uploads', request.files['file'].filename)
 
     request.files['file'].save(file_path)
@@ -44,6 +47,8 @@ def upload():
 @main.route('/audio/')
 @login_required
 def audio():
+    """List all audio files in the S3 bucket"""
+
     s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
     objects = s3_client.list_objects(Bucket=BUCKET_NAME)
@@ -59,6 +64,8 @@ def audio():
 @main.route('/audio/delete')
 @login_required
 def delete_audio():
+    """Delete an audio file from the S3 bucket"""
+
     s3_client = boto3.client('s3', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
 
     file_name = request.args['filename']
@@ -70,6 +77,8 @@ def delete_audio():
 @main.route('/transcribe')
 @login_required
 def transcribe():
+    """Start a transcription job on an audio file"""
+
     client = boto3.client(
         'transcribe', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         region_name='us-east-1'
@@ -92,13 +101,15 @@ def transcribe():
         Media={'MediaFileUri': f'https://s3.amazonaws.com/{BUCKET_NAME}/{file_name}'},
     )
 
-    return redirect('/job/status')
+    return redirect('/transcript/status')
 
 
 # Check job status
-@main.route('/job/status')
+@main.route('/transcript/status')
 @login_required
-def job_status():
+def transcripts():
+    """List all transcription jobs and their status"""
+
     client = boto3.client(
         'transcribe', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         region_name='us-east-1'
@@ -109,9 +120,11 @@ def job_status():
     return render_template('list-jobs.html', jobs=jobs)
 
 
-@main.route('/job/delete')
+@main.route('/transcript/delete')
 @login_required
-def delete_job():
+def delete_transcript():
+    """Delete a transcription job"""
+
     client = boto3.client(
         'transcribe', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         region_name='us-east-1'
@@ -120,24 +133,60 @@ def delete_job():
     job_name = request.args['job_name']
     client.delete_transcription_job(TranscriptionJobName=job_name)
 
-    return redirect('/job/status')
+    return redirect('/transcript/status')
 
 
-# Download transcript
-@main.route('/job/download')
-@login_required
-def download_transcript():
+def get_transcript(job_name):
     client = boto3.client(
         'transcribe', aws_access_key_id=AWS_ACCESS_KEY_ID, aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         region_name='us-east-1'
     )
 
-    job_name = request.args['job_name']
     job = client.get_transcription_job(TranscriptionJobName=job_name)
 
     uri = job['TranscriptionJob']['Transcript']['TranscriptFileUri']
     transcript = json.loads(requests.get(uri).text)['results']['transcripts'][0]['transcript']
 
+    return transcript
+
+
+# Download transcript
+@main.route('/transcript/download')
+@login_required
+def download_transcript():
+    """Download a transcript job's results as a text file"""
+
+    job_name = request.args['job_name']
+    transcript = get_transcript(job_name)
+
     return Response(
         transcript, mimetype='text/plain', headers={'Content-Disposition': f'attachment; filename={job_name}.txt'}
+    )
+
+
+@main.route('/transcript/summarize')
+@login_required
+def summarize_transcript():
+    """Feed transcript to OpenAI and summarize it"""
+
+    instructions = """
+    Summarize the following transcript as meeting minutes. Where appropriate, use bullet points or numbered lists.
+    """
+
+    job_name = request.args['job_name']
+    transcript = get_transcript(job_name)
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": instructions},
+            {"role": "user", "content": transcript},
+        ]
+    )
+
+    # Get the first response from OpenAI
+    content = response['choices'][0]['message']['content']
+    # Return the response as a text file
+    return Response(
+        content, mimetype='text/plain', headers={'Content-Disposition': f'attachment; filename={job_name}-summary.txt'}
     )
