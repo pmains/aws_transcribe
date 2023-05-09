@@ -170,7 +170,9 @@ def summarize_transcript():
     """Feed transcript to OpenAI and summarize it"""
 
     instructions = """
-    Summarize the following transcript as meeting minutes. Where appropriate, use bullet points or numbered lists.
+    Create meeting minutes from the following transcript. Include sections for attendees, a list of topics, decision
+    making processes, decisions reached and action items coming out of the meeting. Include bullet points and numbered
+    lists where appropriate.
     """
 
     job_name = request.args['job_name']
