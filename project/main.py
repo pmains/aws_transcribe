@@ -3,8 +3,10 @@ import re
 
 import boto3
 import openai
+import nltk
+import tiktoken
 
-from flask import Blueprint, Response, redirect, request, render_template, jsonify
+from flask import Blueprint, Response, redirect, request, render_template
 from flask_login import login_required
 from dotenv import load_dotenv
 import os
@@ -164,6 +166,19 @@ def download_transcript():
     )
 
 
+def call_openai(instructions, content):
+    print(f"Calling OpenAI with content: {content[:100]}...")
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": instructions},
+            {"role": "user", "content": content}
+        ]
+    )
+
+    return response['choices'][0]['message']['content']
+
+
 @main.route('/transcript/summarize')
 @login_required
 def summarize_transcript():
@@ -178,16 +193,47 @@ def summarize_transcript():
     job_name = request.args['job_name']
     transcript = get_transcript(job_name)
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": instructions},
-            {"role": "user", "content": transcript},
-        ]
-    )
+    messages = [{"role": "system", "content": instructions}]
 
-    # Get the first response from OpenAI
-    content = response['choices'][0]['message']['content']
+    model = "gpt-3.5-turbo"
+    encoding = tiktoken.encoding_for_model(model)
+
+    if len(encoding.encode(transcript)) > 4000:
+        # Break the transcript into sentence chunks of 4000 words or fewer
+        sentences = nltk.sent_tokenize(transcript)
+        chunks = []
+        chunk = ''
+        chunk_len = 0
+
+        for sentence in sentences:
+            sent_len = len(encoding.encode(sentence))
+
+            # If the sentence is short enough to fit in the current chunk, add it
+            if chunk_len + sent_len < 4000:
+                chunk += " " + sentence
+                chunk_len += sent_len
+            else:
+                chunks.append(chunk)
+                chunk = sentence
+                chunk_len = sent_len
+
+        # If the sentence is the last one, add the current chunk to the list
+        if chunk is not chunks[-1]:
+            chunks.append(chunk)
+
+        print(f"Transcript broken into {len(chunks)} chunks")
+        chunk_transcripts = [call_openai(instructions, chunk) for chunk in chunks]
+
+        combined_instructions = """
+        Combine the following meeting minutes into a single document. Include a single list of attendees, a single list
+        of topics, a single section for decision making processes , a single list of decisions reached and a single list
+        of action items. Include bullet points and numbered lists where appropriate.
+        """
+
+        content = call_openai(combined_instructions, '\n\n'.join(chunk_transcripts))
+    else:
+        content = call_openai(instructions, transcript)
+
     # Return the response as a text file
     return Response(
         content, mimetype='text/plain', headers={'Content-Disposition': f'attachment; filename={job_name}-summary.txt'}
