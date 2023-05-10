@@ -185,20 +185,27 @@ def summarize_transcript():
     """Feed transcript to OpenAI and summarize it"""
 
     instructions = """
-    Create meeting minutes from the following transcript. Include sections for attendees, a list of topics, decision
-    making processes, decisions reached and action items coming out of the meeting. Include bullet points and numbered
-    lists where appropriate.
+    Create meeting minutes from the following partial transcript. Include a comma-separated list of attendees. The next
+    section should be a bulleted list of topics discussed in the transcript. The section after that is a list of
+    decisions reached in the course of the transcript, along with a brief explanation of how those decisions were made.
+    The final section is a list of action items for the attendees.
+    
+    All of these sections — attendees, topics, decisions, and action items — are required. If there are no topics,
+    decisions or actions items, please write "None" in the appropriate section.
+    
+    The resulting document should be in Markdown format.
+    
+    The transcript is as follows:
     """
 
     job_name = request.args['job_name']
     transcript = get_transcript(job_name)
 
-    messages = [{"role": "system", "content": instructions}]
-
     model = "gpt-3.5-turbo"
     encoding = tiktoken.encoding_for_model(model)
 
-    if len(encoding.encode(transcript)) > 4000:
+    limit = 3750
+    if len(encoding.encode(transcript)) > limit:
         # Break the transcript into sentence chunks of 4000 words or fewer
         sentences = nltk.sent_tokenize(transcript)
         chunks = []
@@ -209,7 +216,7 @@ def summarize_transcript():
             sent_len = len(encoding.encode(sentence))
 
             # If the sentence is short enough to fit in the current chunk, add it
-            if chunk_len + sent_len < 4000:
+            if chunk_len + sent_len < limit:
                 chunk += " " + sentence
                 chunk_len += sent_len
             else:
@@ -224,10 +231,14 @@ def summarize_transcript():
         print(f"Transcript broken into {len(chunks)} chunks")
         chunk_transcripts = [call_openai(instructions, chunk) for chunk in chunks]
 
+        # Write the chunks to a file
+        with open(f'{job_name}-chunks.md', 'w') as f:
+            f.write('\n\n---\n\n'.join(chunk_transcripts))
+
         combined_instructions = """
-        Combine the following meeting minutes into a single document. Include a single list of attendees, a single list
-        of topics, a single section for decision making processes , a single list of decisions reached and a single list
-        of action items. Include bullet points and numbered lists where appropriate.
+        Combine the following meeting minutes into a single document. Combine the lists of attendees into a single list.
+        Combine the lists of topics into a single section. Combine the lists of decisions reached and their explanations
+        into a single section. Combine the lists of action items into a single list in its own section.
         """
 
         content = call_openai(combined_instructions, '\n\n'.join(chunk_transcripts))
